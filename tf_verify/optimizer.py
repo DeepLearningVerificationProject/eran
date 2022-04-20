@@ -29,7 +29,7 @@ import numpy as np
 from read_net_file import *
 
 
-operations_for_neuron_count = ["Relu", "Sigmoid", "Tanh", "MaxPool", "LeakyRelu"]
+operations_for_neuron_count = ["Relu", "Sigmoid", "Tanh", "MaxPool", "LeakyRelu", "Elu"]
 
 
 class Optimizer:
@@ -235,6 +235,15 @@ class Optimizer:
                 else:
                     execute_list.append(DeeppolyTanhNode(*self.resources[i][domain]))
                 nn.layertypes.append('Tanh')
+                nn.numlayer += 1
+                i += 1
+            elif self.operations[i] == "Elu":
+                if domain == 'deepzono':
+                    # TODO(klinvill): Low priority, should implement support for ELU using DeepZono
+                    raise NotImplementedError("Elu support for DeepZono has not been implemented yet")
+                else:
+                    execute_list.append(DeeppolyEluNode(*self.resources[i][domain]))
+                nn.layertypes.append('Elu')
                 nn.numlayer += 1
                 i += 1
             elif self.operations[i] == "Gather":

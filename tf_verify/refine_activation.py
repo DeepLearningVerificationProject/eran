@@ -85,6 +85,9 @@ def refine_activation_with_solver_bounds(nn, self, man, element, nlb, nub, relu_
                 element = relu_zono_layerwise(man,True,element,offset, length, use_default_heuristic)
             elif nn.layertypes[layerno] == 'Sigmoid':
                 element = sigmoid_zono_layerwise(man, True, element, offset, length)
+            elif nn.layertypes[layerno] == 'Elu':
+                # TODO(klinvill): Low priority, should implement support for ELU using DeepZono
+                raise NotImplementedError("Elu support for DeepZono has not been implemented yet")
             else:
                 element = tanh_zono_layerwise(man, True, element, offset, length)
             return element
@@ -95,6 +98,8 @@ def refine_activation_with_solver_bounds(nn, self, man, element, nlb, nub, relu_
                 handle_relu_layer(*self.get_arguments(man, element), use_default_heuristic)
             elif nn.layertypes[layerno] == 'Sigmoid':
                 handle_sigmoid_layer(*self.get_arguments(man, element), use_default_heuristic)
+            elif nn.layertypes[layerno] == 'Elu':
+                handle_elu_layer(*self.get_arguments(man, element), use_default_heuristic)
             else:
                 handle_tanh_layer(*self.get_arguments(man, element), use_default_heuristic)
 
@@ -150,5 +155,7 @@ def refine_activation_with_solver_bounds(nn, self, man, element, nlb, nub, relu_
                 handle_relu_layer(*self.get_arguments(man, element), use_default_heuristic)
             elif nn.layertypes[layerno] == 'Sigmoid':
                 handle_sigmoid_layer(*self.get_arguments(man, element), use_default_heuristic)
+            elif nn.layertypes[layerno] == 'Elu':
+                handle_elu_layer(*self.get_arguments(man, element), use_default_heuristic)
             else:
                 handle_tanh_layer(*self.get_arguments(man, element), use_default_heuristic)

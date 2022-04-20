@@ -229,7 +229,7 @@ def prepare_model(model):
 				output_shape.append(filter_shape[0])
 
 			shape_map[node.output[0]] = output_shape
-		elif node.op_type in ["Relu", "Sigmoid", "Tanh", "Softmax", "BatchNormalization", "LeakyRelu"]:
+		elif node.op_type in ["Relu", "Sigmoid", "Tanh", "Softmax", "BatchNormalization", "LeakyRelu", "Elu"]:
 			shape_map[node.output[0]] = shape_map[node.input[0]]
 
 		# Gather is for the moment solely for shapes
@@ -445,7 +445,7 @@ class ONNXTranslator:
 
 
 		### Check if there Are Add/Sub and Div/Mul layers that can be interpreted as normalization layer
-		stop_norm_layers = ["MatMul","Gemm","Conv","MaxPool","Relu","Sigmoid","Tanh","LeakyRelu"]
+		stop_norm_layers = ["MatMul","Gemm","Conv","MaxPool","Relu","Sigmoid","Tanh","LeakyRelu","Elu"]
 		stop_norm_layer = len(self.nodes)
 		extract_mean = False
 		extract_std = False
@@ -568,7 +568,7 @@ class ONNXTranslator:
 				operation_resources.append({'deepzono':deepzono_res, 'deeppoly':deeppoly_res})
 			elif node.op_type == "Placeholder":
 				assert 0, "Placeholder is not in the ONNX graph"
-			elif node.op_type in ["Relu", "Sigmoid", "Tanh", "LeakyRelu"]:
+			elif node.op_type in ["Relu", "Sigmoid", "Tanh", "LeakyRelu", "Elu"]:
 				deeppoly_res = self.nonlinearity_resources(node) + in_out_info
 				deepzono_res = deeppoly_res
 				operation_resources.append({'deepzono':deepzono_res, 'deeppoly':deeppoly_res})
@@ -598,7 +598,7 @@ class ONNXTranslator:
 
 					self.ignore_node(node, operation_types, reshape_map)
 
-				elif node.output[0] in self.input_node_map and self.input_node_map[node.output[0]].op_type in ["Relu", "Sigmoid", "Tanh", "LeakyRelu"] and self.input_node_map[self.input_node_map[node.output[0]].output[0]].op_type == "Reshape":
+				elif node.output[0] in self.input_node_map and self.input_node_map[node.output[0]].op_type in ["Relu", "Sigmoid", "Tanh", "LeakyRelu", "Elu"] and self.input_node_map[self.input_node_map[node.output[0]].output[0]].op_type == "Reshape":
 					# ignore this reshape even in the shape_map
 					self.shape_map[node.output[0]] = self.shape_map[node.input[0]]
 					self.shape_map[self.input_node_map[node.output[0]].output[0]] = self.shape_map[node.input[0]]

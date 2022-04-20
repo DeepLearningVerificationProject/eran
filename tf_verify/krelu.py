@@ -58,7 +58,7 @@ def generate_linexpr0(offset, varids, coeffs):
 
 class KAct:
     def __init__(self, input_hrep, approx=True):
-        assert KAct.type in ["ReLU", "Tanh", "Sigmoid"]
+        assert KAct.type in ["ReLU", "Tanh", "Sigmoid", "ELU"]
         self.k = len(input_hrep[0]) - 1
         self.input_hrep = np.array(input_hrep)
 
@@ -71,6 +71,8 @@ class KAct:
             assert False, "not implemented"
         elif KAct.type == "Tanh":
             self.cons = ftanh_orthant(self.input_hrep)
+        elif KAct.type == "ELU":
+            self.cons = felu_orthant(self.input_hrep)
         else:
             self.cons = fsigm_orthant(self.input_hrep)
 
@@ -139,7 +141,7 @@ def sparse_heuristic_with_cutoff(length, lb, ub, K=3, s=-2):
     return kact_args
 
 
-def sparse_heuristic_curve(length, lb, ub, is_sigm, s=-2):
+def sparse_heuristic_curve(length, lb, ub, activation_type, s=-2):
     assert length == len(lb) == len(ub)
     all_vars = [i for i in range(length)]
     K = 3
@@ -148,7 +150,15 @@ def sparse_heuristic_curve(length, lb, ub, is_sigm, s=-2):
 
     vars_above_cutoff = all_vars[:]
     vars_above_cutoff = [i for i in vars_above_cutoff if ub[i] - lb[i] >= 0.1]
-    limit = 4 if is_sigm else 3
+    if activation_type == "Sigmoid":
+        limit = 4
+    elif activation_type == "Tanh":
+        limit = 3
+    elif activation_type == "Elu":
+        # TODO(klinvill): how should we prioritize k-ReLU support for ELU?
+        raise NotImplementedError("Elu k-ReLU support has not been implemented yet")
+    else:
+        raise NotImplementedError(f"Handling not implemented for {activation_type} activations")
     vars_above_cutoff = [i for i in vars_above_cutoff if lb[i] <= limit and ub[i] >= -limit]
     n_vars_after_cutoff = len(vars_above_cutoff)
 
@@ -189,7 +199,7 @@ def encode_kactivation_cons(nn, man, element, offset, layerno, length, lbi, ubi,
     if activation_type == "ReLU":
         kact_args = sparse_heuristic_with_cutoff(length, lbi, ubi, K=K, s=s)
     else:
-        kact_args = sparse_heuristic_curve(length, lbi, ubi, activation_type == "Sigmoid", s=s)
+        kact_args = sparse_heuristic_curve(length, lbi, ubi, activation_type, s=s)
 
     kact_cons = []
     tdim = ElinaDim(offset+length)

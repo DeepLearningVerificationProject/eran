@@ -122,7 +122,7 @@ def read_tensorflow_net(net_file, in_len, is_trained_with_pytorch, is_gpupoly):
         elif 'SkipCat' in curr_line:
             print("skip concatenation ",x.shape[0],x.shape[1],y.shape[0],y.shape[1])
             x = tf.concat([y,x],1)
-        elif curr_line in ["ReLU", "Sigmoid", "Tanh", "Sign", "Affine", "LeakyRelu"]:
+        elif curr_line in ["ReLU", "Sigmoid", "Tanh", "Sign", "Affine", "LeakyRelu", "Elu"]:
             print(curr_line)
             W = None
 
@@ -143,6 +143,8 @@ def read_tensorflow_net(net_file, in_len, is_trained_with_pytorch, is_gpupoly):
                 x = tf.nn.leaky_relu(tf.nn.bias_add(tf.matmul(tf.reshape(x, [1, numel(x)]),W), b))
             elif(curr_line=="Sign"):
                 x = tf.math.sign(tf.nn.bias_add(tf.matmul(tf.reshape(x, [1, numel(x)]),W), b))
+            elif(curr_line=="Elu"):
+                x = tf.nn.elu(tf.nn.bias_add(tf.matmul(tf.reshape(x, [1, numel(x)]),W), b))
             else:
                 x = tf.nn.tanh(tf.nn.bias_add(tf.matmul(tf.reshape(x, [1, numel(x)]),W), b))
             print("\tOutShape: ", x.shape)
@@ -180,6 +182,9 @@ def read_tensorflow_net(net_file, in_len, is_trained_with_pytorch, is_gpupoly):
                 start = 8
             elif("Tanh" in line):
                 start = 5
+            elif("Elu" in line):
+                # TODO(klinvill): What should the start offset be for ELU?
+                raise NotImplementedError("Start calculation needs to be done for Elu")
             elif("Sign" in line):
                 start = 5
             elif("Affine" in line):
@@ -218,6 +223,8 @@ def read_tensorflow_net(net_file, in_len, is_trained_with_pytorch, is_gpupoly):
                 x = tf.nn.sigmoid(tf.nn.bias_add(x, b))
             elif("Tanh" in line):
                 x = tf.nn.tanh(tf.nn.bias_add(x, b))
+            elif ("Elu" in line):
+                x = tf.nn.elu(tf.nn.bias_add(x, b))
             elif("Affine" in line):
                 x = tf.nn.bias_add(x, b)
             elif("Sign" in line):

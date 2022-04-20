@@ -618,7 +618,11 @@ def create_model(nn, LB_N0, UB_N0, nlb, nub, relu_groups, numlayer, use_milp, is
                                           relu_groups[activation_counter], nn.layertypes[i])
             activation_counter += 1
             start_counter.append(counter)
-            
+
+        elif nn.layertypes[i] == 'Elu':
+            # TODO(klinvill): how should we prioritize MILP support for ELU?
+            raise NotImplementedError("Elu MILP support has not been implemented yet")
+
         elif nn.layertypes[i] == 'Sign':
             index = nn.predecessors[i+1][0]
             counter = handle_sign(model, var_list, counter, len(nlb[i]), nlb[index-1], nub[index-1])

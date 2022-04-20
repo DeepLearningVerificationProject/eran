@@ -770,6 +770,11 @@ class DeepzonoTanh(DeepzonoNonlinearity):
         return element
 
 
+class DeepzonoElu(DeepzonoNonlinearity):
+    def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp,
+                    use_default_heuristic, testing, K=3, s=-2, use_milp=False, approx=True):
+        # TODO(klinvill): Low priority, should implement support for ELU using DeepZono
+        raise NotImplementedError("Elu support for DeepZono has not been implemented yet")
 
 
 class DeepzonoPool:

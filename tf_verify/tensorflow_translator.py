@@ -214,7 +214,7 @@ class TFTranslator:
 						deeppoly_res = in_out_info
 						deepzono_res = in_out_info
 						operation_resources.append({'deepzono':deepzono_res, 'deeppoly':deeppoly_res})
-					elif op.type in ["Relu", "Sigmoid", "Tanh", "Sign", "Softmax", "LeakyRelu"]:
+					elif op.type in ["Relu", "Sigmoid", "Tanh", "Sign", "Softmax", "LeakyRelu", "Elu"]:
 						deeppoly_res = self.nonlinearity_resources(op) + in_out_info
 						deepzono_res = deeppoly_res
 						operation_resources.append({'deepzono':deepzono_res, 'deeppoly':deeppoly_res})
