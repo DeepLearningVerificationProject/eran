@@ -68,7 +68,7 @@ class Optimizer:
                 else:
                     #self.resources[i][domain].append(refine)
                     matrix, m_input_names , output_name , b_output_shape  = self.resources[i][domain]
-                    
+
                     bias_length = reduce((lambda x, y: x*y), b_output_shape)
                     bias = np.zeros(bias_length)
 
@@ -93,7 +93,7 @@ class Optimizer:
                 else:
                     execute_list.append(DeeppolyFCNode(matrix, bias, m_input_names, b_output_name, b_output_shape))
                 i += 1
-            
+
             elif self.operations[i] == "Conv2D":
                 if i < nbr_op-1 and self.operations[i+1] == "BiasAdd":
                     filters, image_shape, strides, pad_top, pad_left, pad_bottom, pad_right, c_input_names, _, _ = self.resources[i][domain]
@@ -135,7 +135,7 @@ class Optimizer:
                     execute_list.append(DeepzonoConvbias(image_shape, filters, bias, strides, pad_top, pad_left, pad_bottom, pad_right, c_input_names, output_name, b_output_shape))
                 else:
                     execute_list.append(DeeppolyConv2dNode(filters, strides, pad_top, pad_left, pad_bottom, pad_right, bias, image_shape, c_input_names, output_name, b_output_shape))
-                i += 1    
+                i += 1
             elif self.operations[i] == "Resadd":
                 #self.resources[i][domain].append(refine)
                 if domain == 'deepzono':
@@ -274,30 +274,30 @@ class Optimizer:
                 assert 0, "the optimizer for" + domain + " doesn't know of the operation type " + self.operations[i]
             output_info.append(self.resources[i-1][domain][-2:])
 
-                
+
     def get_deepzono(self, nn, specLB, specUB = None):
         """
         This function will go through self.operations and self.resources and creates a list of Deepzono-Nodes which then can be run by an Analyzer object.
-        It is assumed that self.resources[i]['deepzono'] holds the resources for the operation of type self.operations[i]                
-        
+        It is assumed that self.resources[i]['deepzono'] holds the resources for the operation of type self.operations[i]
+
         Arguments
         ---------
         specLB : numpy.ndarray
             1D array with the lower bound of the input spec
         specUB : numpy.ndarray
             1D array with the upper bound of the input spec
-        
+
         Return
         ------
         execute_list : list
             list of Deepzono-Nodes that can be run by an Analyzer object
-        """        
+        """
         execute_list = []
         output_info = []
         domain = 'deepzono'
         nbr_op = len(self.operations)
-        
-        
+
+
         assert self.operations[0] == "Placeholder", "the optimizer for Deepzono cannot handle this network "
         input_names, output_name, output_shape = self.resources[0][domain]
         if specUB is None:
@@ -306,7 +306,7 @@ class Optimizer:
             execute_list.append(DeepzonoInput(specLB, specUB, input_names, output_name, output_shape))
         output_info.append(self.resources[0][domain][-2:])
 
-                
+
         self.get_abstract_element(nn, 1, execute_list, output_info, 'deepzono')
 
 
@@ -459,7 +459,7 @@ class Optimizer:
             #TODO support Maxpool
             if self.operations[i] == "MatMul":
                 nn.layertypes.append('FC')
-                
+
                 if i < nbr_op-1 and self.operations[i+1] in ["Add", "BiasAdd"]:
                     matrix,  m_input_names, _, _           = self.resources[i][domain]
                     bias, _, output_name, b_output_shape = self.resources[i+1][domain]
@@ -467,16 +467,16 @@ class Optimizer:
                 else:
                     #self.resources[i][domain].append(refine)
                     matrix, m_input_names , output_name , b_output_shape  = self.resources[i][domain]
-                    
+
                     bias_length = reduce((lambda x, y: x*y), b_output_shape)
                     bias = np.zeros(bias_length)
                     i += 1
                 #if last_layer=="Conv":
-                    
+
                 #    output_shape = nn.out_shapes[-1]
                 #    h,w,c = [output_shape[1], output_shape[2],output_shape[3]]
                 #    new_matrix = permutation(matrix, h, w, c)
-                    
+
                     #num_var = len(matrix)
                     #new_matrix = np.zeros((num_var, np.prod(output_shape)),dtype=np.double)
                     #new_shape = [output_shape[3],output_shape[1], output_shape[2]]
@@ -498,7 +498,7 @@ class Optimizer:
                 num_gpu_layers +=2
                 last_layer = "FC"
             elif self.operations[i] == "Gemm":
-                
+
                 matrix, bias, m_input_names, b_output_name, b_output_shape = self.resources[i][domain]
                 #print("type ", type(matrix), type(bias), matrix.dtype, bias.dtype)
                 network.add_linear(matrix.astype("float64"))
@@ -510,12 +510,12 @@ class Optimizer:
                 #matrix = np.ascontiguousarray(matrix, dtype=np.double)
                 #bias = np.ascontiguousarray(bias, dtype=np.double)
                 #print("Gemm Matrix ", matrix)
-                
+
                 #print("Gemm bias ", bias)
                 num_gpu_layers +=2
                 last_layer = "FC"
                 i += 1
-            
+
             elif self.operations[i] == "Conv2D":
                 last_layer = "Conv"
                 if i < nbr_op-1 and self.operations[i+1] == "BiasAdd":
@@ -562,8 +562,8 @@ class Optimizer:
                 #print("Filter Bias ", bias)
                 network.add_bias(bias.astype("float64"))
                 num_gpu_layers +=2
-                i += 1    
-           
+                i += 1
+
             elif self.operations[i] == "Relu":
                 #self.resources[i][domain].append(refine)
                 nn.layertypes.append('ReLU')
@@ -575,7 +575,7 @@ class Optimizer:
             else:
                 assert 0, "the optimizer for" + "gpupoly" + " doesn't know of the operation type " + self.operations[i]
         return network, relu_layers, num_gpu_layers
-        
+
 
     def set_predecessors(self, nn, output):
         output_index_store = {}
@@ -590,7 +590,7 @@ class Optimizer:
             for input_name in node.input_names:
                 predecessors[i] = output_index_store[input_name]
                 i += 1
-            
+
             node.predecessors = predecessors
             #if not isinstance(node, DeepzonoRelu):
             nn.predecessors.append(predecessors)

@@ -30,7 +30,7 @@ class layers:
         self.biases = []
         self.filters = []
         self.numfilters = []
-        self.filter_size = [] 
+        self.filter_size = []
         self.input_shape = []
         self.strides = []
         self.padding = []
@@ -62,7 +62,7 @@ class layers:
         return not any(x in ['Conv2D', 'Conv2DNoReLU', 'Resadd', 'Resaddnorelu'] for x in self.layertypes)
 
     def set_last_weights(self, constraints):
-        length = 0.0       
+        length = 0.0
         last_weights = [0 for weights in self.weights[-1][0]]
         for or_list in constraints:
             for (i, j, cons) in or_list:
@@ -157,8 +157,8 @@ class Analyzer:
 
     def __del__(self):
         elina_manager_free(self.man)
-        
-    
+
+
     def get_abstract0(self):
         """
         processes self.ir_list and returns the resulting abstract element
@@ -193,19 +193,19 @@ class Analyzer:
         if self.testing:
             return element, testing_nlb, testing_nub
         return element, nlb, nub
-    
-    
+
+
     def analyze(self,terminate_on_failure=True):
         """
         analyses the network with the given input
-        
+
         Returns
         -------
         output: int
             index of the dominant class. If no class dominates then returns -1
         """
         element, nlb, nub = self.get_abstract0()
-        
+
         # if self.domain == "deeppoly" or self.domain == "refinepoly":
         #     linexprarray = backsubstituted_expr_for_layer(self.man, element, 1, True)
         #     for neuron in range(1):
@@ -217,7 +217,7 @@ class Analyzer:
             output_size = self.ir_list[-1].output_length
         else:
             output_size = self.ir_list[-1].output_length#reduce(lambda x,y: x*y, self.ir_list[-1].bias.shape, 1)
-        
+
         dominant_class = -1
         if(self.domain=='refinepoly'):
 
@@ -262,7 +262,7 @@ class Analyzer:
         label_failed = []
         x = None
         if self.output_constraints is None:
-            
+
             candidate_labels = []
             if self.label == -1:
                 for i in range(output_size):
@@ -275,7 +275,7 @@ class Analyzer:
                 for i in range(output_size):
                     adv_labels.append(i)
             else:
-                adv_labels.append(self.prop)   
+                adv_labels.append(self.prop)
 
             for label in candidate_labels:
                 flag = True
@@ -375,13 +375,13 @@ class Analyzer:
             for or_list in self.output_constraints:
                 # OR
                 or_result = False
-                
+
                 for is_greater_tuple in or_list:
                     if is_greater_tuple[1] == -1:
                         if nub[-1][is_greater_tuple[0]] < float(is_greater_tuple[2]):
                             or_result = True
                             break
-                    else: 
+                    else:
                         if self.domain == 'deepzono' or self.domain == 'refinezono':
                             if self.is_greater(self.man, element, is_greater_tuple[0], is_greater_tuple[1]):
                                 or_result = True

@@ -31,11 +31,11 @@ if is_tf_version_2:
 def tensorshape_to_intlist(tensorshape):
 	"""
 	TensorFlow has its own wrapper for shapes because some entries could be None. This function turns them into int-lists. None will become a 1.
-	
+
 	Arguments
 	---------
 	tensorshape : tf.TensorShape
-	
+
 	Return
 	------
 	output : list
@@ -75,15 +75,15 @@ def calculate_padding(padding_str, image_shape, filter_shape, strides):
 class TFTranslator:
 	"""
 	This class is used to turn a TensorFlow model into two lists that then can be processed by an Optimizer object
-	"""	
+	"""
 	def __init__(self, model, session = None):
 		"""
 		This constructor takes a reference to a TensorFlow Operation or Tensor or Keras model and then applies the two TensorFlow functions
-		graph_util.convert_variables_to_constants and graph_util.remove_training_nodes to cleanse the graph of any nodes that are linked to training. This leaves us with 
-		the nodes you need for inference. 
+		graph_util.convert_variables_to_constants and graph_util.remove_training_nodes to cleanse the graph of any nodes that are linked to training. This leaves us with
+		the nodes you need for inference.
 		In the resulting graph there should only be tf.Operations left that have one of the following types [Const, MatMul, Add, BiasAdd, Conv2D, Reshape, MaxPool, AveragePool, Placeholder, Relu, Sigmoid, Tanh, LeakyRelu]
 		If the input should be a Keras model we will ignore operations with type Pack, Shape, StridedSlice, and Prod such that the Flatten layer can be used.
-		
+
 		Arguments
 		---------
 		model : tensorflow.Tensor or tensorflow.Operation or tensorflow.python.keras.engine.sequential.Sequential or keras.engine.sequential.Sequential
@@ -100,7 +100,7 @@ class TFTranslator:
 		session : tf.Session
 		    session which contains the information about the trained variables. If None the code will take the Session from tf.get_default_session(). If you pass a keras model you don't have to
 		    provide a session, this function will automatically get it.
-		"""	
+		"""
 		output_names = None
 		if issubclass(model.__class__, tf.Tensor):
 			output_names = [model.op.name]
@@ -120,20 +120,20 @@ class TFTranslator:
 				model        = model.layers[-1].output.op
 			else:
 				assert 0, "ERAN can't recognize this input"
-		
+
 		if session is None:
 			session = tf.get_default_session()
-		
+
 		tmp = graph_util.convert_variables_to_constants(session, model.graph.as_graph_def(), output_names)
-		self.graph_def = graph_util.remove_training_nodes(tmp)	
-	
-	
-		
+		self.graph_def = graph_util.remove_training_nodes(tmp)
+
+
+
 	def translate(self):
 		"""
 		The constructor has produced a graph_def with the help of the functions graph_util.convert_variables_to_constants and graph_util.remove_training_nodes.
 		translate() takes that graph_def, imports it, and translates it into two lists which then can be processed by an Optimzer object.
-		
+
 		Return
 		------
 		(operation_types, operation_resources) : (list, list)
@@ -146,7 +146,7 @@ class TFTranslator:
 		reshape_map = {}
 		operations_to_be_ignored = ["Reshape", "Pack", "Shape", "StridedSlice", "Prod", "ConcatV2"]
 		operations_to_be_ignored_without_reshape = ["NoOp", "Assign", "Const", "RestoreV2", "SaveV2", "IsVariableInitialized", "Identity"]
-		
+
 		with tf.Graph().as_default() as graph:
 			with tf.Session() as sess:
 				self.sess = sess
@@ -164,7 +164,7 @@ class TFTranslator:
 						else:
 							reshape_map[output_name] = input_name
 						continue
-			
+
 					operation_types.append(op.type)
 					input_tensor_names = []
 					for inp in op.inputs:
@@ -176,10 +176,10 @@ class TFTranslator:
 							continue
 						input_tensor_names.append(name)
 					in_out_info = (input_tensor_names, op.outputs[0].name, tensorshape_to_intlist(op.outputs[0].shape))
-			
+
 					if op.type == "MatMul":
 						deeppoly_res = self.matmul_resources(op) + in_out_info
-						deepzono_res = deeppoly_res 
+						deepzono_res = deeppoly_res
 						operation_resources.append({'deepzono':deepzono_res, 'deeppoly':deeppoly_res})
 					elif op.type == "Add":
 						left_type  = op.inputs[0].op.type
@@ -203,7 +203,7 @@ class TFTranslator:
 					elif op.type == "Conv2D":
 						filters, image_shape, strides, pad_top, pad_left, pad_bottom, pad_right = self.conv2d_resources(op)
 						deeppoly_res = (filters, image_shape, strides, pad_top, pad_left, pad_bottom, pad_right) + in_out_info
-						deepzono_res = deeppoly_res 
+						deepzono_res = deeppoly_res
 						operation_resources.append({'deepzono':deepzono_res, 'deeppoly':deeppoly_res})
 					elif op.type == "MaxPool" or op.type == "AvgPool":
 						image_shape, window_size, strides, pad_top, pad_left, pad_bottom, pad_right = self.pool_resources(op)
@@ -226,73 +226,73 @@ class TFTranslator:
 					else:
 						#print("operation type1 ",in_out_info,op.inputs[0].shape,op.inputs[1].shape)
 						assert 0, "Operations of type " + op.type + " in " + str([o.type for o in graph.get_operations()]) + " are not yet supported."
-		
+
 				return operation_types, operation_resources
 
 
 
 	def matmul_resources(self, op):
 		"""
-		checks which one of the direct ancestor tf.Operations is a constant and returns the underlying tensor as a numpy.ndarray inside a tuple. The matrix is manipulated in a way that it can be 
+		checks which one of the direct ancestor tf.Operations is a constant and returns the underlying tensor as a numpy.ndarray inside a tuple. The matrix is manipulated in a way that it can be
 		used as the left multiplier in the matrix multiplication.
-		
+
 		Arguments
 		---------
 		op : tf.Operation
 		    must have type "MatMul"
-		
-		Return 
+
+		Return
 		------
 		output : tuple
-		    tuple with the matrix (of type numpy.ndarray) as its only item  
+		    tuple with the matrix (of type numpy.ndarray) as its only item
 		"""
 		inputs = op.inputs
 		left   = inputs[0]
 		right  = inputs[1]
-		
+
 		if left.op.type == "Const":
 			matrix = self.sess.run(left) if not op.get_attr("transpose_a") else self.sess.run(left).transpose()
 		else:
 			matrix = self.sess.run(right).transpose() if not op.get_attr("transpose_b") else self.sess.run(right)
 		return (matrix,)
-	
-	
+
+
 	def add_resources(self, op):
 		"""
 		checks which one of the direct ancestor tf.Operations is a constant and returns the underlying tensor as a numpy.ndarray inside a tuple.
-		
+
 		Arguments
 		---------
 		op : tf.Operation
 		    must have type "Add"
-		
-		Return 
+
+		Return
 		------
 		output : tuple
-		    tuple with the addend (of type numpy.ndarray) as its only item   
+		    tuple with the addend (of type numpy.ndarray) as its only item
 		"""
 		inputs = op.inputs
 		left   = inputs[0]
 		right  = inputs[1]
-		
+
 		if left.op.type == "Const":
 			addend = self.sess.run(left)
 		else:
 			addend = self.sess.run(right)
 		return (addend,)
-		
-	
-	    	
+
+
+
 	def conv2d_resources(self, op):
 		"""
 		Extracts the filter, the stride of the filter, and the padding from op as well as the shape of the input coming into op
-		
+
 		Arguments
 		---------
 		op : tf.Operation
 		    must have type "Conv2D"
-		
-		Return 
+
+		Return
 		------
 		output : tuple
 		    has 4 entries (numpy.ndarray, numpy.ndarray, numpy.ndarray, str)
@@ -300,31 +300,31 @@ class TFTranslator:
 		inputs  = op.inputs
 		image   = inputs[0]
 		filters = op.inputs[1]
-		
+
 		filters     = self.sess.run(filters)
 		image_shape = tensorshape_to_intlist(image.shape)[1:]
 		strides     = op.get_attr('strides')[1:3]
 		padding_str = op.get_attr('padding').decode('utf-8')
 		pad_top, pad_left, pad_bottom, pad_right = calculate_padding(padding_str, image_shape, filters.shape, strides)
 		return filters, image_shape, strides, pad_top, pad_left, pad_bottom, pad_right
-	
-	
+
+
 	def pool_resources(self, op):
 		"""
 		Extracts the incoming image size (heigth, width, channels), the size of the maxpool/averagepool window (heigth, width), and the strides of the window (heigth, width)
-		
+
 		Arguments
 		---------
 		op : tf.Operation
 		    must have type "MaxPool" or "AvgPool"
-		
+
 		Return
 		------
 		output : tuple
 		    has 4 entries - (list, numpy.ndarray, numpy.ndarray, str)
 		"""
 		image       = op.inputs[0]
-		
+
 		image_shape = tensorshape_to_intlist(image.shape)[1:]
 		window_size = op.get_attr('ksize')[1:3]
 		strides     = op.get_attr('strides')[1:3]
@@ -332,12 +332,12 @@ class TFTranslator:
 		pad_top, pad_left, pad_bottom, pad_right = calculate_padding(padding_str, image_shape, window_size, strides)
 
 		return image_shape, window_size, strides, pad_top, pad_left, pad_bottom, pad_right
-	
-	
+
+
 	def nonlinearity_resources(self, op):
 		"""
 		This function only outputs an empty tuple, to make the code look more consistent
-		
+
 		Return
 		------
 		output : tuple

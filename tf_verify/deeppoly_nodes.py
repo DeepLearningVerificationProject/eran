@@ -54,7 +54,7 @@ def add_input_output_information_deeppoly(self, input_names, output_name, output
         - self.input_names
         - self.output_name
     which will mainly be used by the Optimizer, but can also be used by the Nodes itself
-    
+
     Arguments
     ---------
     self : Object
@@ -65,10 +65,10 @@ def add_input_output_information_deeppoly(self, input_names, output_name, output
         name of self
     output_shape : iterable
         iterable of ints with the shape of the output of this node
-        
+
     Return
     ------
-    None 
+    None
     """
     if len(output_shape)==4:
         self.output_length = reduce((lambda x, y: x*y), output_shape[1:len(output_shape)])
@@ -155,12 +155,12 @@ class DeeppolyInput:
     def transformer(self, man):
         """
         creates an abstract element from the input spec
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             inside this manager the abstract element will be created
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -198,7 +198,7 @@ class DeeppolyNode:
     def get_arguments(self):
         """
         facilitates putting together all the arguments for the transformers in the child classes
-        
+
         Return
         ------
         output : tuple
@@ -211,7 +211,7 @@ class DeeppolyNode:
     def get_xpp(self):
         """
         helper function to get pointers to the rows of self.weights.
-        
+
         Return
         ------
         output : numpy.ndarray
@@ -226,18 +226,18 @@ class DeeppolyFCNode(DeeppolyNode):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing):
         """
         transformer for the first layer of a neural network, if that first layer is fully connected with relu
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
-            abstract element after the transformer 
+            abstract element after the transformer
         """
         handle_fully_connected_layer(man, element, *self.get_arguments())
         calc_bounds(man, element, nn, nlb, nub, relu_groups, is_refine_layer=True, use_krelu=refine)
@@ -260,23 +260,23 @@ class DeeppolyNonlinearity:
             iterable of ints with the shape of the output of this node
         """
         add_input_output_information_deeppoly(self, input_names, output_name, output_shape)
-    
-    
+
+
     def get_arguments(self, man, element):
         """
         used by the children of this class to easily get the inputs for their transformers
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : tuple
-            arguments for the non-linearity transformers like Relu or Sigmoid 
+            arguments for the non-linearity transformers like Relu or Sigmoid
         """
         length = self.output_length
         return man, element, length, self.predecessors, len(self.predecessors)
@@ -288,14 +288,14 @@ class DeeppolyReluNode(DeeppolyNonlinearity):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, K=3, s=-2, use_milp=False, approx=True):
         """
         transforms element with handle_relu_layer
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -314,21 +314,21 @@ class DeeppolyReluNode(DeeppolyNonlinearity):
             return element, nlb[-1], nub[-1]
 
         return element
- 
+
 
 class DeeppolySignNode(DeeppolyNonlinearity):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp,
                     use_default_heuristic, testing, K=3, s=-2, approx=True):
         """
         transforms element with handle_sign_layer
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -350,14 +350,14 @@ class DeeppolySigmoidNode(DeeppolyNonlinearity):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, K=3, s=-2, use_milp=False, approx=True):
         """
         transforms element with handle_sigmoid_layer
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -374,27 +374,27 @@ class DeeppolySigmoidNode(DeeppolyNonlinearity):
             return element, nlb[-1], nub[-1]
 
         return element
-        
-        
+
+
 class DeeppolyTanhNode(DeeppolyNonlinearity):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, K=3, s=-2, use_milp=False, approx=True):
         """
         transforms element with handle_tanh_layer
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
             abstract element after the transformer
         """
         length = self.output_length
-        
+
         if refine:
             refine_activation_with_solver_bounds(nn, self, man, element, nlb, nub, relu_groups, timeout_lp, timeout_milp, use_default_heuristic, 'deeppoly',K=K, s=s, use_milp=use_milp)
         else:
@@ -411,21 +411,21 @@ class DeeppolyLeakyReluNode(DeeppolyNonlinearity):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, alpha=0.01):
         """
         transforms element with handle_tanh_layer
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
             abstract element after the transformer
         """
         length = self.output_length
-        
+
         if False:
             refine_activation_with_solver_bounds(nn, self, man, element, nlb, nub, relu_groups, timeout_lp, timeout_milp, use_default_heuristic, 'deeppoly')
         else:
@@ -441,7 +441,7 @@ class DeeppolyConv2dNode:
     def __init__(self, filters, strides, pad_top, pad_left, pad_bottom, pad_right, bias, image_shape, input_names, output_name, output_shape):
         """
         collects the information needed for the conv_handle_intermediate_relu_layer transformer and brings it into the required shape
-        
+
         Arguments
         ---------
         filters : numpy.ndarray
@@ -457,7 +457,7 @@ class DeeppolyConv2dNode:
         self.filters     = np.ascontiguousarray(filters, dtype=np.double)
         self.strides     = np.ascontiguousarray(strides, dtype=np.uintp)
         self.bias        = np.ascontiguousarray(bias, dtype=np.double)
-        self.out_size    = (c_size_t * 3)(output_shape[1], output_shape[2], output_shape[3]) 
+        self.out_size    = (c_size_t * 3)(output_shape[1], output_shape[2], output_shape[3])
         self.pad_top     = pad_top
         self.pad_left    = pad_left
         self.pad_bottom = pad_bottom
@@ -467,7 +467,7 @@ class DeeppolyConv2dNode:
     def get_arguments(self):
         """
         facilitates putting together all the arguments for the transformers in the child classes
-        
+
         Return
         ------
         output : tuple
@@ -487,18 +487,18 @@ class DeeppolyConv2dNode:
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing):
         """
         transformer for a convolutional layer, if that layer is an intermediate of the network
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
-            abstract element after the transformer 
+            abstract element after the transformer
         """
         handle_convolutional_layer(man, element, *self.get_arguments())
         calc_bounds(man, element, nn, nlb, nub, relu_groups, is_refine_layer=True)
@@ -574,7 +574,7 @@ class DeeppolyPoolNode:
     def __init__(self, input_shape, window_size, strides, pad_top, pad_left, pad_bottom, pad_right, input_names, output_name, output_shape, is_maxpool):
         """
         collects the information needed for the handle_pool_layer transformer and brings it into the required shape
-        
+
         Arguments
         ---------
         input_shape : numpy.ndarray
@@ -599,18 +599,18 @@ class DeeppolyPoolNode:
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing):
         """
         transformer for a maxpool/averagepool layer, this can't be the first layer of a network
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
-            abstract element after the transformer 
+            abstract element after the transformer
         """
         h, w = self.window_size
         H, W, C = self.input_shape

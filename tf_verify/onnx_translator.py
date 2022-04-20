@@ -137,7 +137,7 @@ def prepare_model(model):
 		if node_input.name not in shape_map:
 			shape_map[node_input.name] = onnxshape_to_intlist(node_input.type.tensor_type.shape)
 			input_node_map[node_input.name] = node_input
-			
+
 	for node in model.graph.node:
 		#print(node.op_type)
 		output_node_map[node.output[0]] = node
@@ -374,15 +374,15 @@ def prepare_model(model):
 class ONNXTranslator:
 	"""
 	This class is used to turn a ONNX model into two lists that then can be processed by an Optimizer object
-	"""	
+	"""
 	def __init__(self, model, is_gpupoly):
 		"""
 		This constructor takes a reference to a ONNX Model and checks model, infers intermediate shapes and sets up maps from name to type and node or constant value
-		graph_util.convert_variables_to_constants and graph_util.remove_training_nodes to cleanse the graph of any nodes that are linked to training. This leaves us with 
-		the nodes you need for inference. 
+		graph_util.convert_variables_to_constants and graph_util.remove_training_nodes to cleanse the graph of any nodes that are linked to training. This leaves us with
+		the nodes you need for inference.
 		In the resulting graph there should only be tf.Operations left that have one of the following types [Const, MatMul, Add, BiasAdd, Conv2D, Reshape, MaxPool, AveragePool, Placeholder, Relu, Sigmoid, Tanh, LeakyRelu]
 		If the input should be a Keras model we will ignore operations with type Pack, Shape, StridedSlice, and Prod such that the Flatten layer can be used.
-		
+
 		Arguments
 		---------
 		model : onnx.ModelProto
@@ -421,12 +421,12 @@ class ONNXTranslator:
 		if 0 in shape_raw:
 			warnings.warn(f"0-sized dimension encountered: {shape_raw} and changed to: {shape_cleaned}",RuntimeWarning)
 		return shape_cleaned
-		
+
 	def translate(self):
 		"""
 		The constructor has produced a graph_def with the help of the functions graph_util.convert_variables_to_constants and graph_util.remove_training_nodes.
 		translate() takes that graph_def, imports it, and translates it into two lists which then can be processed by an Optimzer object.
-		
+
 		Return
 		------
 		(operation_types, operation_resources) : (list, list)
@@ -576,7 +576,7 @@ class ONNXTranslator:
 			# Gather is for the moment solely for shapes
 			elif node.op_type == "Gather":
 				only_shape, image_shape, indexes, axis = self.gather_resources(node)
-				
+
 				if only_shape:
 					self.ignore_node(node, operation_types, reshape_map)
 				else:
@@ -595,7 +595,7 @@ class ONNXTranslator:
 
 			elif node.op_type == "Reshape":
 				if node.output[0] in self.input_node_map and self.input_node_map[node.output[0]].op_type in ["MatMul", "Gemm"]:
-					
+
 					self.ignore_node(node, operation_types, reshape_map)
 
 				elif node.output[0] in self.input_node_map and self.input_node_map[node.output[0]].op_type in ["Relu", "Sigmoid", "Tanh", "LeakyRelu"] and self.input_node_map[self.input_node_map[node.output[0]].output[0]].op_type == "Reshape":
@@ -709,7 +709,7 @@ class ONNXTranslator:
 			shape_out = self.get_shape(self.output_node_map[element].output[0])
 			if config.debug:
 				print('reshape adjust ', str(shape_in), 'to', str(shape_out))
-			
+
 			indexes = reshape_nhwc(shape_in, shape_out)
 			#indexes = indexes[0]
 			inverse_perm = np.arange(len(indexes))[np.argsort(indexes)]
@@ -814,18 +814,18 @@ class ONNXTranslator:
 			addend = self.constants_map[right]
 			is_minuend = False
 		return addend, is_minuend
-		
-		
+
+
 	def conv_resources(self, node):
 		"""
 		Extracts the filter, the stride of the filter, and the padding from node as well as the shape of the input coming into node
-		
+
 		Arguments
 		---------
 		node : ONNX.Node
 		    must have op_type "Conv"
-		
-		Return 
+
+		Return
 		------
 		output : tuple
 		    has 4 entries (numpy.ndarray, numpy.ndarray, numpy.ndarray, str)
@@ -883,24 +883,24 @@ class ONNXTranslator:
 		pad_bottom = pads[6]
 		pad_right = pads[7]
 		return image_shape, pad_top, pad_left, pad_bottom, pad_right
-	
-	
+
+
 	def pool_resources(self, node):
 		"""
 		Extracts the incoming image size (heigth, width, channels), the size of the maxpool/averagepool window (heigth, width), and the strides of the window (heigth, width)
-		
+
 		Arguments
 		---------
 		node : ONNX.Node
 		    must have op_type "MaxPool" or "AveragePool"
-		
+
 		Return
 		------
 		output : tuple
 		    has 4 entries - (list, numpy.ndarray, numpy.ndarray, numpy.ndarray, int, int, str)
 		"""
 		image       = node.input[0]
-		
+
 		image_shape = self.get_shape(image)[1:]
 
 		padding = 'NOTSET'
@@ -931,12 +931,12 @@ class ONNXTranslator:
 		assert pad_top == pad_bottom, 'different padding for top and bottom is not supported in ERAN'
 		assert pad_left == pad_right, 'different padding for left and right is not supported in ERAN'
 		return image_shape, kernel_shape, strides, padding, dilations, pad_top, pad_left, pad_bottom, pad_right, ceil_mode, storage_order
-	
-	
+
+
 	def nonlinearity_resources(self, op):
 		"""
 		This function only outputs an empty tuple, to make the code look more consistent
-		
+
 		Return
 		------
 		output : tuple

@@ -34,7 +34,7 @@ def runRepl(arg, repl):
 def extract_mean(text):
     mean = ''
     m = re.search('mean=\[(.+?)\]', text)
-    
+
     if m:
         means = m.group(1)
     mean_str = means.split(',')
@@ -72,12 +72,12 @@ def permutation(W, h, w, c):
         for j in range(c):
             m[i+j*h*w, column] = 1
             column += 1
-    
-    return np.matmul(W, m) 
+
+    return np.matmul(W, m)
 
 is_tf_version_2 = tf.__version__[0]=='2'
 
-if is_tf_version_2: 
+if is_tf_version_2:
    tf = tf.compat.v1
 
 tf.InteractiveSession().as_default()
@@ -94,7 +94,7 @@ def read_tensorflow_net(net_file, in_len, is_trained_with_pytorch, is_gpupoly):
     last_layer = None
     h,w,c = None, None, None
     is_conv = False
-    
+
     while True:
         curr_line = net.readline()[:-1]
         if 'Normalize' in curr_line:
@@ -125,7 +125,7 @@ def read_tensorflow_net(net_file, in_len, is_trained_with_pytorch, is_gpupoly):
         elif curr_line in ["ReLU", "Sigmoid", "Tanh", "Sign", "Affine", "LeakyRelu"]:
             print(curr_line)
             W = None
-            
+
             if (last_layer in ["Conv2D", "ParSumComplete", "ParSumReLU"]) and is_trained_with_pytorch and not is_gpupoly:
                 W = myConst(permutation(parseVec(net), h, w, c).transpose())
             else:

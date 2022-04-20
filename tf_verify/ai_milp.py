@@ -66,12 +66,12 @@ def handle_conv(model, var_list, start_counter, filters,biases,filter_size,input
         for out_z in range(out_shape[1]):
             for out_x in range(out_shape[2]):
                 for out_y in range(out_shape[3]):
-                
+
                     dst_ind = out_z*out_shape[2]*out_shape[3] + out_x*out_shape[3] + out_y
                     expr = LinExpr()
                     #print("dst ind ", dst_ind)
                     expr += -1*var_list[start+dst_ind]
-                    
+
                     for inp_z in range(input_shape[0]):
                         for x_shift in range(filter_size[0]):
                             for y_shift in range(filter_size[1]):
@@ -83,16 +83,16 @@ def handle_conv(model, var_list, start_counter, filters,biases,filter_size,input
                                     continue
                                 mat_offset = x_val*input_shape[2] + y_val + inp_z*input_shape[1]*input_shape[2]
                                 if(mat_offset>=num_in_neurons):
-                                    continue 
+                                    continue
                                 src_ind = start_counter + mat_offset
                                 #print("src ind ", mat_offset)
                                 #filter_index = x_shift*filter_size[1]*input_shape[0]*out_shape[1] + y_shift*input_shape[0]*out_shape[1] + inp_z*out_shape[1] + out_z
                                 expr.addTerms(filters[out_z][inp_z][x_shift][y_shift],var_list[src_ind])
-                                                           
+
                     expr.addConstant(biases[out_z])
-                    
-                    model.addConstr(expr, GRB.EQUAL, 0)  
-                      
+
+                    model.addConstr(expr, GRB.EQUAL, 0)
+
     else:
         for out_x in range(out_shape[1]):
             for out_y in range(out_shape[2]):
@@ -215,7 +215,7 @@ def handle_maxpool(model, var_list, layerno, src_counter, pool_size, input_shape
         out_y = int((out_pos-out_x*o12) / output_shape[3])
         out_z = int(out_pos-out_x*o12 - out_y*output_shape[3])
         inp_z = out_z
-               
+
         max_u = float("-inf")
         max_l = float("-inf")
         sum_l = 0.0
@@ -233,20 +233,20 @@ def handle_maxpool(model, var_list, layerno, src_counter, pool_size, input_shape
                     continue
                 pool_cur_dim = x_val*i12 + y_val*input_shape[2] + inp_z
                 if pool_cur_dim >= num_neurons:
-                    continue    
+                    continue
                 pool_map.append(pool_cur_dim)
-                lb = lbi_prev[pool_cur_dim] 
+                lb = lbi_prev[pool_cur_dim]
                 ub = ubi_prev[pool_cur_dim]
-                sum_l = sum_l + lb       
+                sum_l = sum_l + lb
                 if ub > max_u:
                     max_u = ub
                     max_u_var = pool_cur_dim
-                if lb > max_l:   
+                if lb > max_l:
                     max_l = lb
                     max_l_var = pool_cur_dim
-                l = l + 1     
+                l = l + 1
         dst_index = maxpool_counter + out_pos
-                
+
         if use_milp==1:
             binary_expr = LinExpr()
             for l in range(len(pool_map)):
@@ -846,7 +846,7 @@ def verify_network_with_milp(nn, LB_N0, UB_N0, nlb, nub, constraints, spatial_co
 
     if spatial_constraints is not None:
         add_spatial_constraints(model, spatial_constraints, var_list, input_size)
-                
+
     adv_examples = []
     non_adv_examples = []
     adv_val = []

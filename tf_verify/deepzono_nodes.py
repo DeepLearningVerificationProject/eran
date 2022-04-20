@@ -31,7 +31,7 @@ from refine_activation import *
 def add_dimensions(man, element, offset, n):
     """
     adds dimensions to an abstract element
-    
+
     Arguments
     ---------
     man : ElinaManagerPtr
@@ -42,7 +42,7 @@ def add_dimensions(man, element, offset, n):
         offset at which the dimensions should be added
     n : int
         n dimensions will be added to element at offset
-    
+
     Return
     ------
     output : ElinaAbstract0Ptr
@@ -60,7 +60,7 @@ def add_dimensions(man, element, offset, n):
 def remove_dimensions(man, element, offset, n):
     """
     removes dimensions from an abstract element
-    
+
     Arguments
     ---------
     man : ElinaManagerPtr
@@ -71,7 +71,7 @@ def remove_dimensions(man, element, offset, n):
         offset form which on the dimensions should be removed
     n : int
         n dimensions will be removed from the element at offset
-    
+
     Return
     ------
     output : ElinaAbstract0Ptr
@@ -92,7 +92,7 @@ def get_xpp(matrix):
     ---------
     matrix : numpy.ndarray
         must be a 2D array
-    
+
     Return
     ------
     output : numpy.ndarray
@@ -108,7 +108,7 @@ def add_input_output_information(self, input_names, output_name, output_shape):
         - self.input_names
         - self.output_name
     which will mainly be used by the Optimizer, but can also be used by the Nodes itself
-    
+
     Arguments
     ---------
     self : Object
@@ -119,10 +119,10 @@ def add_input_output_information(self, input_names, output_name, output_shape):
         name of self
     output_shape : iterable
         iterable of ints with the shape of the output of this node
-        
+
     Return
     ------
-    None 
+    None
     """
     if len(output_shape)==4:
         self.output_length = reduce((lambda x, y: x*y), output_shape[1:len(output_shape)])
@@ -221,7 +221,7 @@ class DeepzonoInputZonotope:
         output : ElinaAbstract0Ptr
         """
         zonotope_shape = self.zonotope.shape
-        
+
         element = elina_abstract0_from_zonotope(man, 0, zonotope_shape[0], self.num_error_terms, self.zonotope)
         return element
 
@@ -245,20 +245,20 @@ class DeepzonoMatmul:
         add_input_output_information(self, input_names, output_name, output_shape)
         self.matrix = np.ascontiguousarray(matrix, dtype=np.double)
         #self.refine = refine
-    
-    
+
+
     def get_arguments(self, man, element):
         """
         used to get the arguments to the transformer, also used by the child class
         Note: this function also adds the necessary dimensions, removing the old ones after the transformer is the responsibility of the caller
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : tuple
@@ -269,19 +269,19 @@ class DeepzonoMatmul:
         element            = add_dimensions(man, element, offset + old_length, new_length)
         matrix_xpp         = get_xpp(self.matrix)
         return man, True, element, offset+old_length, matrix_xpp, new_length, offset, old_length
-    
-    
+
+
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, approx=True):
         """
         transforms element with ffn_matmult_without_bias_zono
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -317,19 +317,19 @@ class DeepzonoAdd:
         """
         add_input_output_information(self, input_names, output_name, output_shape)
         self.bias = np.ascontiguousarray(bias, dtype=np.double)
-    
-    
+
+
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, approx=True):
         """
         transforms element with ffn_add_bias_zono
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -387,7 +387,7 @@ class DeepzonoSub:
         #nn.ffn_counter += 1
         add_bounds(man, element, nlb, nub, self.output_length, offset+old_length, is_refine_layer=True)
         if testing:
-        #    lb, ub = 
+        #    lb, ub =
             return element, nlb[-1], nub[-1]
         return element
 
@@ -434,7 +434,7 @@ class DeepzonoMul:
         add_bounds(man, element, nlb, nub, self.output_length, offset+old_length, is_refine_layer=True)
         #nn.ffn_counter += 1
         if testing:
-        #    lb, ub = 
+        #    lb, ub =
             return element, nlb[-1], nub[-1]
         return element
 
@@ -460,20 +460,20 @@ class DeepzonoAffine(DeepzonoMatmul):
         """
         DeepzonoMatmul.__init__(self, matrix, input_names, output_name, output_shape)
         self.bias = np.ascontiguousarray(bias, dtype=np.double)
-        #self.refine = refine    
+        #self.refine = refine
 
-    
+
     def transformer(self, nn, man, element,nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, approx=True):
         """
         transforms element with ffn_matmult_zono
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -524,20 +524,20 @@ class DeepzonoConv:
         self.pad_left   = pad_left
         self.pad_bottom = pad_bottom
         self.pad_right  = pad_right
-    
-    
+
+
     def get_arguments(self, man, element):
         """
         used to get the arguments to the transformer, also used by the child class
         Note: this function also adds the necessary dimensions, removing the old ones after the transformer is the responsibility of the caller
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : tuple
@@ -551,20 +551,20 @@ class DeepzonoConv:
         strides     = (c_size_t * 2)(self.strides[0], self.strides[1])
         element     = add_dimensions(man, element, offset+old_length, new_length)
         return man, True, element, old_length+offset, self.filters, np.ndarray([0,0,0]), image_size, offset, filter_size, num_filters, strides, self.output_shape, self.pad_top, self.pad_left, False
-        
-    
-    
+
+
+
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, approx=True):
         """
         transforms element with conv_matmult_zono, without bias
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -575,7 +575,7 @@ class DeepzonoConv:
         #nn.last_layer='Conv2D'
         add_bounds(man, element, nlb, nub, self.output_length, offset+old_length, is_refine_layer=True)
 
-        
+
         nn.conv_counter += 1
         if testing:
             return remove_dimensions(man, element, offset, old_length), nlb[-1], nub[-1]
@@ -607,8 +607,8 @@ class DeepzonoConvbias(DeepzonoConv):
         """
         DeepzonoConv.__init__(self, image_shape, filters, strides, pad_top, pad_left, pad_bottom, pad_right, input_names, output_name, output_shape)
         self.bias = np.ascontiguousarray(bias, dtype=np.double)
-    
-    
+
+
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, approx=True):
         """
         transforms element with conv_matmult_zono, with bias
@@ -619,7 +619,7 @@ class DeepzonoConvbias(DeepzonoConv):
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -633,7 +633,7 @@ class DeepzonoConvbias(DeepzonoConv):
 
         #nn.last_layer='Conv2D'
         add_bounds(man, element, nlb, nub, self.output_length, offset+old_length, is_refine_layer=True)
-        
+
         nn.conv_counter += 1
         if testing:
             return remove_dimensions(man, element, offset, old_length), nlb[-1], nub[-1]
@@ -655,23 +655,23 @@ class DeepzonoNonlinearity:
             iterable of ints with the shape of the output of this node
         """
         add_input_output_information(self, input_names, output_name, output_shape)
-    
-    
+
+
     def get_arguments(self, man, element):
         """
         used by the children of this class to easily get the inputs for their transformers
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : tuple
-            arguments for the non-linearity transformers like Relu or Sigmoid 
+            arguments for the non-linearity transformers like Relu or Sigmoid
         """
         offset, length = self.abstract_information
         return man, True, element, offset, length
@@ -683,14 +683,14 @@ class DeepzonoRelu(DeepzonoNonlinearity):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, K=3, s=-2, use_milp=False, approx=True):
         """
         transforms element with relu_zono_layerwise
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -719,20 +719,20 @@ class DeepzonoSigmoid(DeepzonoNonlinearity):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, K=3, s=-2, use_milp=False, approx=True):
         """
         transforms element with sigmoid_zono_layerwise
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
             abstract element after the transformer
         """
-        
+
         offset, old_length = self.abstract_information
         element = sigmoid_zono_layerwise(*self.get_arguments(man, element))
         add_bounds(man, element, nlb, nub, self.output_length, offset, is_refine_layer=True)
@@ -748,14 +748,14 @@ class DeepzonoTanh(DeepzonoNonlinearity):
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, K=3, s=-2, use_milp=False, approx=True):
         """
         transforms element with tanh_zono_layerwise
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -802,20 +802,20 @@ class DeepzonoPool:
         self.pad_right = pad_right
         self.output_shape = (c_size_t * 3)(output_shape[1], output_shape[2], output_shape[3])
         self.is_maxpool = is_maxpool
-        
-    
-    
+
+
+
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, approx=True):
         """
         transforms element with maxpool_zono
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -851,19 +851,19 @@ class DeepzonoDuplicate:
         """
         self.src_offset = src_offset
         self.num_var    = num_var
-        
-        
+
+
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, approx=True):
         """
         adds self.num_var dimensions to element and then fills these dimensions with zono_copy_section
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
@@ -890,20 +890,20 @@ class DeepzonoResadd:
             iterable of ints with the shape of the output of this node
         """
         add_input_output_information(self, input_names, output_name, output_shape)
-        
-    
+
+
     def transformer(self, nn, man, element, nlb, nub, relu_groups, refine, timeout_lp, timeout_milp, use_default_heuristic, testing, approx=True):
         """
         uses zono_add to add two sections from element together and removes the section that is defined by self.abstract_information[2]
         the result of the addition is stored in the section defined by self.abstract_information[:2]
-        
+
         Arguments
         ---------
         man : ElinaManagerPtr
             man to which element belongs
         element : ElinaAbstract0Ptr
             abstract element onto which the transformer gets applied
-        
+
         Return
         ------
         output : ElinaAbstract0Ptr
